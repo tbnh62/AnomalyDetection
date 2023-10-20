@@ -3,7 +3,7 @@
 # Info generali
 - https://www.scribbledata.io/anomaly-detection-primer/
 
-- Progetti Interessanti
+# Progetti Interessanti
 - https://github.com/surya2003-real/anomaly-detection-and-object-tracking
 - https://github.com/fjchange/awesome-video-anomaly-detection
 
