@@ -2,6 +2,7 @@
 
 # Info generali
 - https://www.scribbledata.io/anomaly-detection-primer/
+- https://paperswithcode.com/task/abnormal-event-detection-in-video
 
 # Progetti Interessanti
 - https://github.com/surya2003-real/anomaly-detection-and-object-tracking
