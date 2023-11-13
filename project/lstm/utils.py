@@ -199,6 +199,27 @@ def filter_tracks_by_time_gap(data_list, percentile=90):
     return filtered_data_list
 
 
+def rescale_times(tracks):
+    for track in tracks:
+        # Extracting the timestamp from the ID and rounding the first time instant
+        id_parts = track["id"].split("-")
+        first_time = round(track["position"][0]["time"])
+        id_parts[-1] = str(int(id_parts[-1]) + first_time)
+        track["id"] = "-".join(id_parts)
+
+        # Updating time instants
+        for i, point in enumerate(track["position"]):
+            if all(
+                coord == -1
+                for coord in [point["x"], point["y"], point["w"], point["h"]]
+            ):
+                point["time"] = -1.0
+            else:
+                point["time"] = i * 0.1
+
+    return tracks
+
+
 def pad_tracks_to_double_max_length(data_list, placeholder):
     # Trova la lunghezza massima tra tutte le tracce
     max_length = max(len(track["position"]) for track in data_list)

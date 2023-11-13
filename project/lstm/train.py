@@ -40,7 +40,9 @@ def main():
     data_list = filter_tracks_by_time_gap(data_list)
 
     data_list = extract_and_pad_tracks(data_list)
-    # print(len(data_list)) # 2945
+    print(len(data_list))  # 11971
+
+    data_list = rescale_times(data_list)
 
     with open("preprocessed tracks.json", "w") as file:
         json.dump(data_list, file, indent=4)
@@ -94,3 +96,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+## sequence_length = 15
+# loss: 0.3244
+# loss: 0.2766
+# loss: 0.2731
+# loss: 0.2715
+# loss: 0.2702
+# loss: 0.2691
+# loss
