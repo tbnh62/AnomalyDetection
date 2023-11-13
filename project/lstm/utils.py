@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import math
 
 
 def filter_short_tracks(data_list, min_track_point):
@@ -22,71 +23,53 @@ def filter_patchy_tracks(data_list):
     return filtered_tracks
 
 
-def replace_with_sub_tracks(tracks, sub_track_length=15):
-    # This function replaces trajectories longer than `sub_trajectory_length` with their sub-trajectories
-    new_tracks = []
-
-    for track in tracks:
-        points = track["position"]
-        if len(points) > sub_track_length:
-            # Extract sub-trajectories of length 15 and add them to the new trajectory list
-            for i in range(len(points) - sub_track_length + 1):
-                sub_track = {
-                    "position": points[i : i + sub_track_length],
-                    "id": track["id"],
-                }
-                new_tracks.append(sub_track)
-        else:
-            # If the trajectory is not longer than 15 points, add it as it is
-            new_tracks.append(track)
-
-    return new_tracks
+def find_closest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return array[idx]
 
 
-def approximate_time(time, base=125, step=200, max_k=9):
-    # Calculate the closest time in the specified set
-    closest_time = min(
-        [base + k * step for k in range(max_k + 1)], key=lambda x: abs(x - time)
-    )
-    return closest_time
+def embed_and_pad(track):
+    # Determine the range for time instants
+    last_time = track["position"][-1]["time"]
+    time_instants = [
+        k * 1000 / 15 for k in range(math.ceil(last_time / (1000 / 15)) + 1)
+    ]
 
+    # Create a dictionary to store points for each time instant
+    points_dict = {time: [] for time in time_instants}
 
-def discretize_track_times(data_list):
-    for track in data_list:
-        for point in track["position"]:
-            point["time"] = approximate_time(point["time"])
+    # Assign points to the closest time instant
+    for point in track["position"]:
+        closest_time = find_closest(time_instants, point["time"])
+        points_dict[closest_time].append(point)
 
-
-def embed_in_super_track(
-    track, discretized_times=[125 + k * 200 for k in range(10)], pad_value=-1
-):
-    if not track["position"]:
-        return []
-
-    # Create a dictionary to easily access points by their time
-    time_to_point = {point["time"]: point for point in track["p"]}
-
-    # Create the super-track
+    # Calculate median values and create super track
     super_track = []
-    for time in discretized_times:
-        if time in time_to_point:
-            super_track.append(time_to_point[time])
-        else:
-            # Pad with -1 if there is no point at this time
+    for time in time_instants:
+        if points_dict[time]:
+            x = np.median([p["x"] for p in points_dict[time]])
+            y = np.median([p["y"] for p in points_dict[time]])
+            w = np.median([p["w"] for p in points_dict[time]])
+            h = np.median([p["h"] for p in points_dict[time]])
             super_track.append(
                 {
-                    "x": pad_value,
-                    "y": pad_value,
-                    "w": pad_value,
-                    "h": pad_value,
-                    "time": time,
+                    "x": round(x, 3),
+                    "y": round(y, 3),
+                    "w": round(w, 3),
+                    "h": round(h, 3),
+                    "time": round(time, 3),
                 }
+            )
+        else:
+            super_track.append(
+                {"x": -1, "y": -1, "w": -1, "h": -1, "time": round(time, 3)}
             )
 
     return super_track
 
 
-def extract_sub_tracks(super_track, sub_track_length=10):
+def extract_sub_tracks(super_track, sub_track_length=15):
     # Extract all possible sub-tracks of length 10
     return [
         super_track[i : i + sub_track_length]
@@ -97,7 +80,7 @@ def extract_sub_tracks(super_track, sub_track_length=10):
 def extract_and_pad_tracks(tracks):
     new_tracks = []
     for track in tracks:
-        super_track = embed_in_super_track(track)
+        super_track = embed_and_pad(track)
         sub_tracks = extract_sub_tracks(super_track)
         for sub_track in sub_tracks:
             new_tracks.append({"position": sub_track, "id": track["id"]})
@@ -125,6 +108,18 @@ def normalize_time(data_list):
         for pos in track["position"]:
             pos["time"] /= max_time
     """
+
+
+def all_time_gaps(data_list):
+    time_gaps = []
+    for track in data_list:
+        if track["position"]:
+            initial_time = track["position"][0]["time"]
+            for pos in track["position"]:
+                time_gap = pos["time"] - initial_time
+                pos["time"] = time_gap
+                time_gaps.append(time_gap)
+    return time_gaps
 
 
 def convert_to_center_coordinates(data_list):

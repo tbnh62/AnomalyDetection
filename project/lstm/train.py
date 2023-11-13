@@ -38,8 +38,7 @@ def main():
     ## fill_time_gaps(data_list, min_cadence)
 
     data_list = filter_tracks_by_time_gap(data_list)
-    # print_random_sample("After filtering by time gap", data_list, 5)
-    discretize_track_times(data_list)
+
     data_list = extract_and_pad_tracks(data_list)
     # print(len(data_list)) # 2945
 
@@ -77,7 +76,7 @@ def main():
     # Inizializza il modello LSTM
     input_dim = 5  # x, y, w, h e time
     hidden_dim = 32  # Numero di unità LSTM
-    sequence_length = 10  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
+    sequence_length = 15  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
 
     # Addestra il modello
