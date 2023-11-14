@@ -1,14 +1,17 @@
 # AnomalyDetection
 
 # Info generali
+
 - https://www.scribbledata.io/anomaly-detection-primer/
 - https://paperswithcode.com/task/abnormal-event-detection-in-video
 
 # Progetti Interessanti
+
 - https://github.com/surya2003-real/anomaly-detection-and-object-tracking
 - https://github.com/fjchange/awesome-video-anomaly-detection
 
 # Altri Progetti
+
 - https://github.com/ishaanjav/TrafficAI
 - https://github.com/mamonraab/Real-Time-Violence-Detection-in-Video-
 - https://github.com/ShrishtiHore/Anomaly-Detection-in-CCTV-Surveillance-Videos
@@ -18,8 +21,10 @@
 - https://arxiv.org/pdf/1701.01546.pdf
 - https://modelzoo.co/
 - https://github.com/GGYIMAH1031/Smart_Surveillance
+- https://docs.nixtla.io/docs/timegpt_quickstart
 
-# Varie pub 
+# Varie pub
+
 - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9460365/
 - https://www.mdpi.com/1424-8220/23/11/5024
 - https://arxiv.org/pdf/1906.04574.pdf
@@ -46,6 +51,7 @@
 - https://www.researchgate.net/publication/342620086_Real-Time_Anomaly_Recognition_Through_CCTV_Using_Neural_Networks
 
 # Link Video
+
 - https://www.youtube.com/watch?v=1fiF7B6VkCk
 - https://www.youtube.com/watch?v=5_XSYlAfJZM
 - https://www.youtube.com/watch?v=PtChZ0D7tkE
