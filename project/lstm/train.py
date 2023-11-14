@@ -15,6 +15,11 @@ def main():
     data_access = DataAccess()
     data_list = data_access.load_data(f"{local_repository}\\data\\tracks.json")
 
+    # LSTM parameters
+    input_dim = 5  # x, y, w, h e time
+    hidden_dim = 32  # Numero di unità LSTM
+    sequence_length = 15  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
+
     # Elimina tutte le tracce troppo piccole (numero di punti < config.min_track_point)
     min_track_point = config.get_int("Data", "min_track_point")
     data_list = filter_short_tracks(data_list, min_track_point)
@@ -39,12 +44,12 @@ def main():
 
     data_list = filter_tracks_by_time_gap(data_list)
 
-    data_list = extract_and_pad_tracks(data_list)
+    data_list = extract_and_pad_tracks(data_list, sequence_length=sequence_length)
     print(len(data_list))  # 11971
 
-    data_list = rescale_times(data_list)
+    data_list = rescale_times(data_list, track_length=sequence_length)
 
-    with open("preprocessed tracks.json", "w") as file:
+    with open("project\\lstm\\preprocessed tracks.json", "w") as file:
         json.dump(data_list, file, indent=4)
 
     # print_random_sample("After extracting and padding", data_list, 5)
@@ -75,10 +80,6 @@ def main():
     X_train = np.array(X_train)
     X_test = np.array(X_test)
 
-    # Inizializza il modello LSTM
-    input_dim = 5  # x, y, w, h e time
-    hidden_dim = 32  # Numero di unità LSTM
-    sequence_length = 15  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
 
     # Addestra il modello
@@ -98,10 +99,28 @@ if __name__ == "__main__":
     main()
 
 ## sequence_length = 15
-# loss: 0.3244
-# loss: 0.2766
-# loss: 0.2731
-# loss: 0.2715
-# loss: 0.2702
-# loss: 0.2691
-# loss
+# ..
+# epoch 10 loss 0.2630
+# epoch 11 loss 0.2620
+# ..
+# epoch 15 loss 0.2569
+# ..
+# epoch 23 loss 0.2432
+# ..
+# epoch 27 loss 0.2398
+
+
+## sequence_length = 30
+# loss: 0.4589
+# loss: 0.3704
+# loss: 0.3615
+# ..
+# epoch 17 loss 0.3440
+# epoch 18 loss 0.3427
+# ..
+# epoch 29 loss 0.3358
+# ..
+# epoch 39 loss 0.3269
+# epoch 40 loss 0.3256
+# epoch 41 loss 0.3275 did not improve
+# epoch 42 loss 0.32437

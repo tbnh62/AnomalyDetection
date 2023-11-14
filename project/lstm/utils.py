@@ -77,11 +77,11 @@ def extract_sub_tracks(super_track, sub_track_length=15):
     ]
 
 
-def extract_and_pad_tracks(tracks):
+def extract_and_pad_tracks(tracks, sequence_length):
     new_tracks = []
     for track in tracks:
         super_track = embed_and_pad(track)
-        sub_tracks = extract_sub_tracks(super_track)
+        sub_tracks = extract_sub_tracks(super_track, sub_track_length=sequence_length)
         for sub_track in sub_tracks:
             new_tracks.append({"position": sub_track, "id": track["id"]})
     return new_tracks
@@ -199,7 +199,7 @@ def filter_tracks_by_time_gap(data_list, percentile=90):
     return filtered_data_list
 
 
-def rescale_times(tracks):
+def rescale_times(tracks, track_length):
     for track in tracks:
         # Extracting the timestamp from the ID and rounding the first time instant
         id_parts = track["id"].split("-")
@@ -215,7 +215,10 @@ def rescale_times(tracks):
             ):
                 point["time"] = -1.0
             else:
-                point["time"] = i * 0.1
+                # Scale time instants from 0 to 1
+                point["time"] = (
+                    round(i / (track_length - 1), 1) if track_length > 1 else 0.0
+                )
 
     return tracks
 
