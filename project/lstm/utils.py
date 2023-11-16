@@ -3,8 +3,10 @@ import random
 import math
 import copy
 
+from sklearn.ensemble import IsolationForest
 
-def filter_short_tracks(data_list, min_track_point):
+
+def filter_out_short_tracks(data_list, min_track_point):
     # Filtra le tracce con meno punti di min_track_point
     return [track for track in data_list if len(track["position"]) >= min_track_point]
 
@@ -88,12 +90,14 @@ def extract_and_pad_tracks(tracks, sequence_length):
     return new_tracks
 
 
-def normalize_time(data_list):
+def traslate_time(data_list):
     # Normalizza il tempo in modo che ogni traccia inizi da zero
     for track in data_list:
         initial_time = track["position"][0]["time"]
         for pos in track["position"]:
             pos["time"] -= initial_time
+
+    return data_list
 
     """
     max_time = max(
@@ -200,6 +204,40 @@ def filter_tracks_by_time_gap(data_list, percentile=90):
     return filtered_data_list
 
 
+def filter_outliers(tracks, sequence_length):
+    filtered_tracks = []
+
+    for i in range(sequence_length):
+        # Extract the i-th point from each track
+        ith_points = [track["position"][i] for track in tracks]
+
+        # Prepare data for Isolation Forest
+        X = np.array(
+            [[point["x"], point["y"], point["w"], point["h"]] for point in ith_points]
+        )
+
+        # Apply Isolation Forest
+        clf = IsolationForest(random_state=42)
+        preds = clf.fit_predict(X)
+
+        # Filter out the outliers
+        filtered_ith_points = [
+            ith_points[j] for j in range(len(ith_points)) if preds[j] != -1
+        ]
+
+        # Append the filtered points to the corresponding track in filtered_tracks
+        if i == 0:
+            # Initialize tracks in filtered_tracks
+            filtered_tracks = [
+                {"position": []} for _ in range(len(filtered_ith_points))
+            ]
+
+        for track_index, point in enumerate(filtered_ith_points):
+            filtered_tracks[track_index]["position"].append(point)
+
+    return filtered_tracks
+
+
 def rescale_times(tracks, track_length):
     for track in tracks:
         # Extracting the timestamp from the ID and rounding the first time instant
@@ -288,3 +326,69 @@ def print_random_sample(message, tracks, sample_size):
 
     for track in sample_tracks:
         print(track_to_string(track))
+
+
+def invert_tracks(tracks, num_samples):
+    # Select a random sample of tracks
+    sampled_tracks = random.sample(tracks, num_samples)
+
+    inverted_tracks = []
+
+    for track in sampled_tracks:
+        track_length = len(track)
+        inverted_track = []
+
+        # Reverse the order of the points in the track
+        reversed_points = track[::-1]
+
+        for i, point in enumerate(reversed_points):
+            if all(coord == -1 for coord in point[:4]):
+                # If all coordinates are -1, pad the entire point with -1
+                inverted_point = [-1, -1, -1, -1, -1]
+            else:
+                # Keep the coordinates as they are and recalculate the time
+                inverted_point = list(point[:4]) + [round(i / (track_length - 1), 2)]
+
+            inverted_track.append(inverted_point)
+
+        inverted_tracks.append(np.array(inverted_track))
+
+        # Print original and inverted track
+        print("Original Track:")
+        print(track)
+        print("Inverted Track:")
+        print(np.array(inverted_track))
+
+    return sampled_tracks, inverted_tracks
+
+
+def perturb_tracks(tracks, num_samples):
+    # Select a random sample of tracks
+    sampled_tracks = random.sample(tracks, num_samples)
+
+    transformed_tracks = []
+
+    for track in sampled_tracks:
+        transformed_track = []
+
+        for point in track:
+            if all(coord == -1 for coord in point[:4]):
+                # If all coordinates are -1, keep the point as it is
+                transformed_point = point.copy()
+            else:
+                # Apply transformation to the y coordinate
+                x, y, w, h, time = point
+                transformed_y = round(0.5 * math.sin(2 * math.pi * y), 2)
+                transformed_point = [x, transformed_y, w, h, time]
+
+            transformed_track.append(transformed_point)
+
+        transformed_tracks.append(np.array(transformed_track))
+
+        # Print original and perturbed track
+        print("Original Track:")
+        print(track)
+        print("Perturbed Track:")
+        print(np.array(transformed_track))
+
+    return sampled_tracks, transformed_tracks
