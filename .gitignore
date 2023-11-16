@@ -2,3 +2,12 @@ project/lstm/.idea
 project/lstm/__pycache__
 project/lstm/yolov8n.pt
 iadnnvenv/
+project/lstm/local.py
+project/lstm/dataanalysis.py
+project/lstm/testutils.py
+project/lstm/preprocessed*
+weights*
+data/Village-Tilton/Distribution*
+data/Village-Tilton/Statistics*
+
+

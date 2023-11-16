@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import math
+import copy
 
 
 def filter_short_tracks(data_list, min_track_point):
@@ -29,11 +30,13 @@ def find_closest(array, value):
     return array[idx]
 
 
-def embed_and_pad(track):
-    # Determine the range for time instants
+def embed_and_pad(track, min_track_length):
+    # Determine the range for time instants. Maybe this step should be included in the extract_and_pad routine
+    m = min_track_length
     last_time = track["position"][-1]["time"]
     time_instants = [
-        k * 1000 / 15 for k in range(math.ceil(last_time / (1000 / 15)) + 1)
+        math.ceil(k * 1000 / m)
+        for k in range(max(m, math.ceil(last_time / (1000 / m)) + 1))
     ]
 
     # Create a dictionary to store points for each time instant
@@ -41,7 +44,7 @@ def embed_and_pad(track):
 
     # Assign points to the closest time instant
     for point in track["position"]:
-        closest_time = find_closest(time_instants, point["time"])
+        closest_time = math.ceil(find_closest(time_instants, point["time"]))
         points_dict[closest_time].append(point)
 
     # Calculate median values and create super track
@@ -54,25 +57,23 @@ def embed_and_pad(track):
             h = np.median([p["h"] for p in points_dict[time]])
             super_track.append(
                 {
-                    "x": round(x, 3),
-                    "y": round(y, 3),
-                    "w": round(w, 3),
-                    "h": round(h, 3),
-                    "time": round(time, 3),
+                    "x": round(x, 2),
+                    "y": round(y, 2),
+                    "w": round(w, 2),
+                    "h": round(h, 2),
+                    "time": time,
                 }
             )
         else:
-            super_track.append(
-                {"x": -1, "y": -1, "w": -1, "h": -1, "time": round(time, 3)}
-            )
+            super_track.append({"x": -1, "y": -1, "w": -1, "h": -1, "time": time})
 
     return super_track
 
 
-def extract_sub_tracks(super_track, sub_track_length=15):
+def extract_sub_tracks(super_track, sub_track_length):
     # Extract all possible sub-tracks of length 10
     return [
-        super_track[i : i + sub_track_length]
+        copy.deepcopy(super_track[i : i + sub_track_length])
         for i in range(len(super_track) - sub_track_length + 1)
     ]
 
@@ -80,7 +81,7 @@ def extract_sub_tracks(super_track, sub_track_length=15):
 def extract_and_pad_tracks(tracks, sequence_length):
     new_tracks = []
     for track in tracks:
-        super_track = embed_and_pad(track)
+        super_track = embed_and_pad(track, min_track_length=sequence_length)
         sub_tracks = extract_sub_tracks(super_track, sub_track_length=sequence_length)
         for sub_track in sub_tracks:
             new_tracks.append({"position": sub_track, "id": track["id"]})
@@ -213,12 +214,11 @@ def rescale_times(tracks, track_length):
                 coord == -1
                 for coord in [point["x"], point["y"], point["w"], point["h"]]
             ):
-                point["time"] = -1.0
+                point["time"] = -1
+
             else:
                 # Scale time instants from 0 to 1
-                point["time"] = (
-                    round(i / (track_length - 1), 1) if track_length > 1 else 0.0
-                )
+                point["time"] = round(i / (track_length - 1), 2)
 
     return tracks
 
