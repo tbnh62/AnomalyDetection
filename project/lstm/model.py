@@ -54,6 +54,8 @@ class LSTMAnomalyDetector:
             ]
         )
 
+        # Load the initializing weights
+        # model.load_weights('path_to_your_model_weights.h5')
         # Compila il modello con l'ottimizzatore Adam e la loss MSE
         model.compile(optimizer=Adam(clipvalue=1.0), loss="mse")
 

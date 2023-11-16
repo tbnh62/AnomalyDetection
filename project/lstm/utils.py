@@ -205,35 +205,38 @@ def filter_tracks_by_time_gap(data_list, percentile=90):
 
 
 def filter_outliers(tracks, sequence_length):
-    filtered_tracks = []
+    # Initialize filtered_tracks with empty dictionaries for each track
+    filtered_tracks = [{"position": [], "id": track["id"]} for track in tracks]
 
     for i in range(sequence_length):
-        # Extract the i-th point from each track
-        ith_points = [track["position"][i] for track in tracks]
-
-        # Prepare data for Isolation Forest
-        X = np.array(
-            [[point["x"], point["y"], point["w"], point["h"]] for point in ith_points]
-        )
-
-        # Apply Isolation Forest
-        clf = IsolationForest(random_state=42)
-        preds = clf.fit_predict(X)
-
-        # Filter out the outliers
-        filtered_ith_points = [
-            ith_points[j] for j in range(len(ith_points)) if preds[j] != -1
+        # Extract the i-th point from each track and convert to a list of numerical values
+        ith_points = [
+            list(track["position"][i].values())
+            for track in tracks
+            if len(track["position"]) > i
         ]
 
-        # Append the filtered points to the corresponding track in filtered_tracks
-        if i == 0:
-            # Initialize tracks in filtered_tracks
-            filtered_tracks = [
-                {"position": []} for _ in range(len(filtered_ith_points))
-            ]
+        # Convert to NumPy array for Isolation Forest
+        ith_points_array = np.array(ith_points)
 
-        for track_index, point in enumerate(filtered_ith_points):
-            filtered_tracks[track_index]["position"].append(point)
+        # Apply Isolation Forest to detect outliers
+        clf = IsolationForest(random_state=42)
+        clf.fit(ith_points_array)
+        is_inlier = clf.predict(ith_points_array)
+
+        # Append non-outlier points to the corresponding track in filtered_tracks
+        for track_index, inlier in enumerate(is_inlier):
+            if inlier == 1:
+                filtered_tracks[track_index]["position"].append(
+                    tracks[track_index]["position"][i]
+                )
+
+    # Ensure each track's 'position' has 'sequence_length' points
+    for track in filtered_tracks:
+        while len(track["position"]) < sequence_length:
+            track["position"].append(
+                {"x": -1, "y": -1, "w": -1, "h": -1, "time": -1}
+            )  # Replace with your default value
 
     return filtered_tracks
 
