@@ -37,8 +37,8 @@ def embed_and_pad(track, min_track_length):
     m = min_track_length
     last_time = track["position"][-1]["time"]
     time_instants = [
-        math.ceil(k * 1000 / m)
-        for k in range(max(m, math.ceil(last_time / (1000 / m)) + 1))
+        math.ceil(k * 2000 / m)
+        for k in range(max(m, math.ceil(last_time / (2000 / m)) + 1))
     ]
 
     # Create a dictionary to store points for each time instant
@@ -205,38 +205,58 @@ def filter_tracks_by_time_gap(data_list, percentile=90):
 
 
 def filter_outliers(tracks, sequence_length):
-    # Initialize filtered_tracks with empty dictionaries for each track
-    filtered_tracks = [{"position": [], "id": track["id"]} for track in tracks]
+    # Initialize filtered_tracks with the original tracks
+    filtered_tracks = [
+        {"position": list(track["position"]), "id": track["id"]} for track in tracks
+    ]
 
     for i in range(sequence_length):
         # Extract the i-th point from each track and convert to a list of numerical values
-        ith_points = [
-            list(track["position"][i].values())
-            for track in tracks
-            if len(track["position"]) > i
-        ]
+        ith_points = []
+        track_indices = []  # Keep track of which tracks the points belong to
+        for track_index, track in enumerate(tracks):
+            if len(track["position"]) > i:
+                point = track["position"][i]
+                # Check if the point is not a padded point
+                if not all(val == -1 for val in point.values()):
+                    ith_points.append(list(point.values()))
+                    track_indices.append(track_index)
 
         # Convert to NumPy array for Isolation Forest
         ith_points_array = np.array(ith_points)
 
-        # Apply Isolation Forest to detect outliers
-        clf = IsolationForest(random_state=42)
-        clf.fit(ith_points_array)
-        is_inlier = clf.predict(ith_points_array)
+        # Apply Isolation Forest to detect outliers, only if there are non-padded points
+        if ith_points_array.size > 0:
+            clf = IsolationForest(random_state=42)
+            clf.fit(ith_points_array)
+            is_inlier = clf.predict(ith_points_array)
 
-        # Append non-outlier points to the corresponding track in filtered_tracks
-        for track_index, inlier in enumerate(is_inlier):
-            if inlier == 1:
-                filtered_tracks[track_index]["position"].append(
-                    tracks[track_index]["position"][i]
-                )
+            # Replace non-outlier points in the corresponding track in filtered_tracks
+            for idx, inlier in enumerate(is_inlier):
+                if inlier == -1:  # If the point is an outlier
+                    # Replace the outlier point with a padded point
+                    filtered_tracks[track_indices[idx]]["position"][i] = {
+                        "x": -1,
+                        "y": -1,
+                        "w": -1,
+                        "h": -1,
+                        "time": -1,
+                    }
 
-    # Ensure each track's 'position' has 'sequence_length' points
-    for track in filtered_tracks:
-        while len(track["position"]) < sequence_length:
-            track["position"].append(
-                {"x": -1, "y": -1, "w": -1, "h": -1, "time": -1}
-            )  # Replace with your default value
+    return filtered_tracks
+
+
+def filter_tracks_by_min_points(tracks, sequence_length, min_points):
+    filtered_tracks = []
+
+    for track in tracks:
+        non_padded_count = sum(
+            1
+            for point in track["position"]
+            if not all(val == -1 for val in point.values())
+        )
+        if non_padded_count >= min_points:
+            filtered_tracks.append(track)
 
     return filtered_tracks
 

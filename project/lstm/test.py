@@ -25,7 +25,7 @@ def main():
     sequence_length = 30  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
 
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
-    model.get_model().load_weights("weights_epoch-89.h5")
+    model.get_model().load_weights("weights_epoch-102.h5")
 
     # prendo una traccia di riferimento
     reference_track = data_list[8]
