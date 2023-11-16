@@ -16,6 +16,7 @@ track_history = defaultdict(lambda: [])
 standard_width = 640
 standard_height = 480
 
+
 def display_text(frame, text, position):
     # Converti le coordinate in interi prima di utilizzarle
     position = (int(position[0]), int(position[1]))
@@ -24,8 +25,12 @@ def display_text(frame, text, position):
     font_scale = 1
     font_color = (0, 255, 0)  # Green color
     font_thickness = 2
-    cv2.putText(frame, text, position, font, font_scale, font_color, font_thickness, cv2.LINE_AA)
+    cv2.putText(
+        frame, text, position, font, font_scale, font_color, font_thickness, cv2.LINE_AA
+    )
 
+
+"""
 def prepare_sequence(track):
     # Convert track data to the input format expected by the LSTM model
     # Assuming the LSTM model takes normalized coordinates and time as input
@@ -33,28 +38,65 @@ def prepare_sequence(track):
     # Normalize x, y coordinates
     sequence[:, :2] /= np.array([standard_width, standard_height])
     # Add time as the third dimension
-    sequence = np.hstack((sequence, (600 / 69533) * np.arange(len(track)).reshape(-1, 1)))
-    return sequence.reshape(1, sequence_length, input_dim)  # LSTM expects input shape (batch_size, sequence_length, input_dim)
+    sequence = np.hstack(
+        (sequence, (600 / 69533) * np.arange(len(track)).reshape(-1, 1))
+    )
+    return sequence.reshape(
+        1, sequence_length, input_dim
+    )  # LSTM expects input shape (batch_size, sequence_length, input_dim)
+"""
+
+
+def prepare_sequence(track):
+    # Ensure the track has exactly `sequence_length` elements
+    if len(track) > sequence_length:
+        track = track[-sequence_length:]  # Use only the last `sequence_length` points
+    elif len(track) < sequence_length:
+        # Pad the track with zeros if it has less than `sequence_length` points
+        padding = [(0, 0)] * (sequence_length - len(track))
+        track = padding + track
+
+    # Convert track data to the input format expected by the LSTM model
+    sequence = np.array(track, dtype=np.float32)
+
+    # Normalize x, y coordinates
+    sequence[:, :2] /= np.array([standard_width, standard_height])
+
+    # Add time as the third dimension
+    time_dimension = (600 / 69533) * np.arange(len(track)).reshape(-1, 1)
+    sequence = np.hstack((sequence, time_dimension))
+
+    # Ensure the sequence has 5 dimensions
+    # If your track data already has 5 dimensions, you can skip this step
+    if sequence.shape[1] < input_dim:
+        # Pad the sequence with zeros to get 5 dimensions
+        padding = np.zeros((sequence_length, input_dim - sequence.shape[1]))
+        sequence = np.hstack((sequence, padding))
+
+    return sequence.reshape(1, sequence_length, input_dim)
+
 
 def display_anomaly_score(frame, score, position):
     # Display the anomaly score on the video frame
     text = f"Anomaly Score: {score:.2f}"
     display_text(frame, text, position)
 
+
 def display_anomaly_score2(frame, score, position):
     # Display the anomaly score on the video frame
     text = f"{score:.2f}"
     display_text(frame, text, position)
 
+
 # Load the YOLO model
-model = YOLO('yolov8n.pt')
+model = YOLO("yolov8n.pt")
 
 # Initialize the LSTM model
-input_dim = 3  # assuming x, y, and time as inputs
+input_dim = 5  # assuming x, y, and time as inputs
 hidden_dim = 32
-sequence_length = 20
+sequence_length = 30
 lstm_model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
-lstm_model.get_model().load_weights('weights_epoch-18.h5')
+lstm_model.get_model().load_weights("weights_epoch-89.h5")
 
 # Initialize video capture
 cap = cv2.VideoCapture(0)
@@ -92,7 +134,9 @@ while True:
 
         # Visualize the results on the frame
         annotated_frame = results[0].plot()
-        display_text(annotated_frame, anomaly_text, (10, 30))  # Display the anomaly text
+        display_text(
+            annotated_frame, anomaly_text, (10, 30)
+        )  # Display the anomaly text
         # Plot the tracks
         for box, track_id in zip(boxes, track_ids):
             x, y, w, h = box
@@ -103,7 +147,13 @@ while True:
 
             # Draw the tracking lines
             points = np.hstack(track).astype(np.int32).reshape((-1, 1, 2))
-            cv2.polylines(annotated_frame, [points], isClosed=False, color=(230, 230, 230), thickness=10)
+            cv2.polylines(
+                annotated_frame,
+                [points],
+                isClosed=False,
+                color=(230, 230, 230),
+                thickness=10,
+            )
 
         # Loop through each track
         for track_id, track in track_history.items():
@@ -115,7 +165,9 @@ while True:
                 # Perform the anomaly detection
                 anomaly_score = lstm_model.evaluate(sequence)
                 # Display the anomaly score on the video frame
-                display_anomaly_score2(annotated_frame, anomaly_score, last_sequence[-1][:2])
+                display_anomaly_score2(
+                    annotated_frame, anomaly_score, last_sequence[-1][:2]
+                )
 
         # Display the annotated frame
         cv2.imshow("YOLOv8 Tracking", annotated_frame)
@@ -125,7 +177,7 @@ while True:
         cv2.imshow("YOLOv8 Tracking [n]", frame)
 
     # Break the loop if 'q' is pressed
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
 # When everything done, release the capture
