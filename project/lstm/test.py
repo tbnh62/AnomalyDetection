@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: ascii -*-
+# -*- coding: utf-8 -*-
 
 from data_access import DataAccess
 from data_preprocess import DataPreparation
