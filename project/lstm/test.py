@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
+# -*- coding: ascii -*-
 
 from data_access import DataAccess
 from data_preprocess import DataPreparation
