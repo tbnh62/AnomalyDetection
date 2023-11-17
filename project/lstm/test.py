@@ -24,8 +24,8 @@ def main():
     hidden_dim = 32  # Numero di unità LSTM
     sequence_length = 30  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
 
-    weights_fo4fmtp = "weights_epoch-16fo4ftmp04.h5"
-    weights_fmtp = "weights_epoch-23ftmp04.h5"
+    weights_fo4fmtp = "YFOweights_epoch-16fo4ftmp04.h5"
+    weights_fmtp = "NFOweights_epoch-23ftmp04.h5"
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
     model.get_model().load_weights(weights_fo4fmtp)
 
