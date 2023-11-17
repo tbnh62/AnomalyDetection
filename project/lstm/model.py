@@ -55,7 +55,7 @@ class LSTMAnomalyDetector:
         )
 
         # Load the initializing weights
-        model.load_weights("initializing_weights_losss0133.h5")
+        model.load_weights("weights_epoch-91fo.h5")
         # Compila il modello con l'ottimizzatore Adam e la loss MSE
         model.compile(optimizer=Adam(clipvalue=1.0), loss="mse")
 
@@ -69,7 +69,11 @@ class LSTMAnomalyDetector:
                     mask_value=-1, input_shape=(self.sequence_length, self.input_dim)
                 ),
                 # Primo LSTM layer con regolarizzazione L1 ed L2
-                tf.keras.layers.LSTM(self.hidden_dim, return_sequences=True),
+                tf.keras.layers.LSTM(
+                    self.hidden_dim,
+                    return_sequences=True,
+                    kernel_regularizer=tf.keras.regularizers.l1_l2(l1=1e-5, l2=1e-4),
+                ),
                 # Dropout dopo il primo layer LSTM
                 tf.keras.layers.Dropout(0.1),
                 # Secondo LSTM layer

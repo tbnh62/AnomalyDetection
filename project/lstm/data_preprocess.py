@@ -45,7 +45,10 @@ class DataPreparation:
         )
         with open("project\\lstm\\preprocessed tracks.json", "w") as file:
             json.dump(data_list, file, indent=4)
-        print("Cardinality of preprocessed data:", len(data_list))  # 22939
+        print(
+            "Cardinality of preprocessed data:", len(data_list)
+        )  # 4518 (4773 with min_points=3) (5631 without filter_outliers)
+
         padded_sequences = [
             np.array(
                 [

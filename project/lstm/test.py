@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 from data_access import DataAccess
 from data_preprocess import DataPreparation
 from config import Config
@@ -26,8 +24,10 @@ def main():
     hidden_dim = 32  # Numero di unità LSTM
     sequence_length = 30  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
 
+    weights_fo4fmtp = "weights_epoch-16fo4ftmp04.h5"
+    weights_fmtp = "weights_epoch-23ftmp04.h5"
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
-    model.get_model().load_weights("weights_epoch-102.h5")
+    model.get_model().load_weights(weights_fo4fmtp)
 
     # prendo una traccia di riferimento
     reference_track = data_list[8]
@@ -36,7 +36,11 @@ def main():
     reversed_track = invert_tracks(data_list, 2)
     perturbed_track = perturb_tracks(data_list, 2)
 
-    sampled_tracks, inverted_tracks = invert_tracks(data_list, 3)
+    sampled_tracks, inverted_tracks = invert_tracks(data_list, 2000)
+    # sampled_tracks, perturbed_tracks = perturb_tracks(data_list, 1000)
+
+    accuracy_count_inverted_tracks = 0
+    iteration_count = 0
 
     for reference_track, reversed_track in zip(sampled_tracks, inverted_tracks):
         # Convert tracks to numpy arrays if they aren't already
@@ -64,6 +68,19 @@ def main():
 
         print("MSE for reference track:", mse_reference_value)
         print("MSE for reversed track:", mse_reverse_value)
+
+        ratio = (
+            mse_reverse_value / mse_reference_value if mse_reference_value != 0 else 0
+        )
+
+        if ratio >= 10:
+            accuracy_count_inverted_tracks += 1
+        iteration_count += 1
+
+    print(
+        "Rough accuracy estimate on inverted tracks:",
+        accuracy_count_inverted_tracks / iteration_count,
+    )
 
 
 if __name__ == "__main__":
