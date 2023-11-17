@@ -1,3 +1,5 @@
+# coding=utf-8
+
 from data_access import DataAccess
 from data_preprocess import DataPreparation
 from config import Config
