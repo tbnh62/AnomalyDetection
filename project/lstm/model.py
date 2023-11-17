@@ -55,7 +55,7 @@ class LSTMAnomalyDetector:
         )
 
         # Load the initializing weights
-        model.load_weights("weights_epoch-91fo.h5")
+        model.load_weights("initializing_weights_epoch-91fo.h5")
         # Compila il modello con l'ottimizzatore Adam e la loss MSE
         model.compile(optimizer=Adam(clipvalue=1.0), loss="mse")
 

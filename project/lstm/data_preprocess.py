@@ -39,7 +39,7 @@ class DataPreparation:
         ) as file:
             json.dump(data_list, file, indent=4)
         # outlier filtering
-        data_list = filter_outliers(data_list, sequence_length=sequence_length)
+        # data_list = filter_outliers(data_list, sequence_length=sequence_length)
         data_list = filter_tracks_by_min_points(
             data_list, sequence_length=sequence_length, min_points=4
         )

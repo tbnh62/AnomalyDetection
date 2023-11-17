@@ -30,7 +30,7 @@ def main():
     weights_fo4fmtp = "YFOweights_epoch-16fo4ftmp04.h5"
     weights_fmtp = "NFOweights_epoch-23ftmp04.h5"
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
-    model.get_model().load_weights(weights_fo4fmtp)
+    model.get_model().load_weights(weights_fmtp)
 
     # prendo una traccia di riferimento
     reference_track = data_list[8]
