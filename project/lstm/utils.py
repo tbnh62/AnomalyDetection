@@ -402,7 +402,7 @@ def perturb_tracks(tracks, num_samples):
                 # Apply transformation to the y coordinate
                 x, y, w, h, time = point
                 transformed_y = round(0.5 * math.sin(2 * math.pi * y), 2)
-                transformed_point = [x, transformed_y, w, h, time]
+                transformed_point = [x + transformed_y, y, w, h, time]
 
             transformed_track.append(transformed_point)
 
@@ -415,3 +415,44 @@ def perturb_tracks(tracks, num_samples):
         print(np.array(transformed_track))
 
     return sampled_tracks, transformed_tracks
+
+
+def simulate_u_inversion(tracks, num_samples, sequence_length=30):
+    # Sample a subset of tracks
+    sampled_tracks = random.sample(tracks, num_samples)
+
+    inverted_tracks = []
+
+    for track in sampled_tracks:
+        new_track = {"position": [], "id": track["id"]}
+
+        # Determine the midpoint of the track
+        midpoint = sequence_length // 2
+
+        # First half of the track
+        first_half = track["position"][:midpoint]
+
+        # Create the second half by reverse sorting the first half
+        second_half = sorted(
+            first_half, key=lambda x: (x["x"], x["y"], x["w"], x["h"]), reverse=True
+        )
+
+        # Adjust the time for the second half
+        for i, point in enumerate(second_half):
+            if all(val == -1 for val in point.values()):  # Check for padded point
+                continue
+            else:
+                point["time"] = round((midpoint + i) / (sequence_length - 1), 2)
+
+        # Combine the two halves
+        new_track["position"] = first_half + second_half
+
+        # Ensure the track length is consistent with sequence_length
+        while len(new_track["position"]) < sequence_length:
+            new_track["position"].append(
+                {"x": -1, "y": -1, "w": -1, "h": -1, "time": -1}
+            )
+
+        inverted_tracks.append(new_track)
+
+    return sampled_tracks, inverted_tracks

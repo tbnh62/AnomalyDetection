@@ -27,8 +27,10 @@ def main():
     hidden_dim = 32  # Numero di unità LSTM
     sequence_length = 30  # max(len(track['position']) for track in data_list)  # Lunghezza della sequenza dopo il padding
 
-    weights_fo4fmtp = "YFOweights_epoch-16fo4ftmp04.h5"
-    weights_fmtp = "NFOweights_epoch-23ftmp04.h5"
+    weights_fo4fmtp = (
+        "YFOweights_epoch-16fo4ftmp04.h5"  # this considers Isolation Forest
+    )
+    weights_fmtp = "NFOweights_epoch-23ftmp04.h5"  # this excludes Isolation Forest
     model = LSTMAnomalyDetector(input_dim, hidden_dim, sequence_length)
     model.get_model().load_weights(weights_fmtp)
 
@@ -39,13 +41,16 @@ def main():
     reversed_track = invert_tracks(data_list, 2)
     perturbed_track = perturb_tracks(data_list, 2)
 
-    sampled_tracks, inverted_tracks = invert_tracks(data_list, 2000)
-    # sampled_tracks, perturbed_tracks = perturb_tracks(data_list, 1000)
+    sampled_tracks, transformed_tracks = invert_tracks(
+        data_list, 2000
+    )  # reverse tracks
+    # sampled_tracks, transformed_tracks = perturb_tracks(data_list, 1000) # zigzagging tracks
+    # sampled_tracks, transformed_tracks = simulate_u_inversion_tracks(data_list, 1000) # U inversions
 
     accuracy_count_inverted_tracks = 0
     iteration_count = 0
 
-    for reference_track, reversed_track in zip(sampled_tracks, inverted_tracks):
+    for reference_track, reversed_track in zip(sampled_tracks, transformed_tracks):
         # Convert tracks to numpy arrays if they aren't already
         reference_track = np.array(reference_track)
         reversed_track = np.array(reversed_track)

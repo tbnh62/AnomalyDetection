@@ -22,6 +22,7 @@
 - https://modelzoo.co/
 - https://github.com/GGYIMAH1031/Smart_Surveillance
 - https://docs.nixtla.io/docs/timegpt_quickstart
+- https://github.com/blue-yonder/tsfresh
 
 # Varie pub
 
