@@ -44,10 +44,19 @@ def main():
     sampled_tracks, transformed_tracks = invert_tracks(
         data_list, 2000
     )  # reverse tracks
-    # sampled_tracks, transformed_tracks = perturb_tracks(data_list, 1000) # zigzagging tracks
-    # sampled_tracks, transformed_tracks = simulate_u_inversion_tracks(data_list, 1000) # U inversions
 
-    accuracy_count_inverted_tracks = 0
+    """
+    sampled_tracks, transformed_tracks = perturb_tracks(
+        data_list, 500
+    )  # zigzagging tracks
+    """
+    """
+    sampled_tracks, transformed_tracks = simulate_u_inversion(
+        data_list, track_length=sequence_length, num_samples=500
+    )  # U inversions
+    """
+
+    accuracy_count_transformed_tracks = 0
     iteration_count = 0
 
     for reference_track, reversed_track in zip(sampled_tracks, transformed_tracks):
@@ -82,12 +91,12 @@ def main():
         )
 
         if ratio >= 10:
-            accuracy_count_inverted_tracks += 1
+            accuracy_count_transformed_tracks += 1
         iteration_count += 1
 
     print(
-        "Rough accuracy estimate on inverted tracks:",
-        accuracy_count_inverted_tracks / iteration_count,
+        "Rough accuracy estimate on transformed tracks:",
+        accuracy_count_transformed_tracks / iteration_count,
     )
 
 

@@ -417,6 +417,45 @@ def perturb_tracks(tracks, num_samples):
     return sampled_tracks, transformed_tracks
 
 
+def simulate_u_inversion(tracks, track_length, num_samples):
+    # Sample a subset of tracks
+    sampled_indices = random.sample(range(len(tracks)), num_samples)
+    sampled_tracks = [tracks[i] for i in sampled_indices]
+
+    inverted_tracks = []
+
+    for track in sampled_tracks:
+        # Determine the midpoint of the track
+        midpoint = track_length // 2
+
+        # First half of the track
+        first_half = track[:midpoint, :]
+
+        # Create the second half by reverse sorting the first half
+        second_half = np.array(
+            sorted(first_half, key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
+        )
+
+        # Adjust the time for the second half
+        for i in range(len(second_half)):
+            if np.all(second_half[i, :-1] == -1):  # Check for padded point
+                continue
+            else:
+                second_half[i, -1] = round((midpoint + i) / (track_length - 1), 2)
+
+        # Combine the two halves
+        new_track = np.vstack([first_half, second_half])
+
+        # Ensure the track length is consistent with sequence_length
+        while len(new_track) < track_length:
+            new_track = np.vstack([new_track, np.array([-1, -1, -1, -1, -1])])
+
+        inverted_tracks.append(new_track)
+
+    return np.array(sampled_tracks), np.array(inverted_tracks)
+
+
+"""
 def simulate_u_inversion(tracks, num_samples, sequence_length=30):
     # Sample a subset of tracks
     sampled_tracks = random.sample(tracks, num_samples)
@@ -456,3 +495,4 @@ def simulate_u_inversion(tracks, num_samples, sequence_length=30):
         inverted_tracks.append(new_track)
 
     return sampled_tracks, inverted_tracks
+"""
